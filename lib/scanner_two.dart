@@ -1,7 +1,5 @@
 import 'package:barcode_detector/code_zone_entity.dart';
-import 'package:barcode_detector/painter.dart';
 import 'package:barcode_detector/painter_four.dart';
-import 'package:barcode_detector/painter_three.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -98,10 +96,8 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
 
   @override
   Widget build(BuildContext context) {
-    print(counter);
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
-    print('build width  $width');
     setState(() {
       topLeftAnimation = Tween<Offset>(
           begin: Offset(width / 8, height / 8),
@@ -122,13 +118,12 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
         Future.delayed(
           const Duration(seconds: 1),
           () {
-
             if (counter == 0) {
               counter++;
               controller.stop();
               // Navigator.of(context).push(_createRoute());
               _launchURL();
-              print('target00');
+
             }
           },
         );
@@ -136,12 +131,7 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
       }
     });
 
-    // controllerCam.barcodes.listen((event) {
-    //   print('eeeeee $event');
-    // });
-
     final CodeZone codeZone = ref.watch(codeZoneProvider);
-    print('watch ${codeZone.topLeft.dx}');
     setState(() {
       topLeftAnimation.end =
           Offset((codeZone.topLeft.dx / 2.3) - 40, codeZone.topLeft.dy / 2);
@@ -154,54 +144,18 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
 
       bottomLeftAnimation.end = Offset(
           (codeZone.bottomLeft.dx / 2.3) - 40, codeZone.bottomLeft.dy / 1.9);
-      // controller.forward();
     });
-    // ref.listen<CodeZone>(codeZoneProvider, (CodeZone? previous, CodeZone next) {
-    //   print('pree $previous');
-    //   setState(() {
-    //     final codeZoneNext = next;
-    //     final codeZonePrev = previous as CodeZone;
-    //     topLeftAnimation.begin = Offset(
-    //         (codeZonePrev.topLeft.dx / 2.3) - 40, codeZonePrev.topLeft.dy / 2);
-    //     topLeftAnimation.end = Offset(
-    //         (codeZoneNext.topLeft.dx / 2.3) - 40, codeZoneNext.topLeft.dy / 2);
-    //
-    //     topRightAnimation.begin = Offset((codeZonePrev.topRight.dx / 2.1) - 40,
-    //         codeZonePrev.topRight.dy / 2);
-    //     topRightAnimation.end = Offset((codeZoneNext.topRight.dx / 2.1) - 40,
-    //         codeZoneNext.topRight.dy / 2);
-    //
-    //     bottomRightAnimation.begin = Offset(
-    //         (codeZonePrev.bottomRight.dx / 2.1) - 40,
-    //         codeZonePrev.bottomRight.dy / 1.9);
-    //     bottomRightAnimation.end = Offset(
-    //         (codeZoneNext.bottomRight.dx / 2.1) - 40,
-    //         codeZoneNext.bottomRight.dy / 1.9);
-    //
-    //     bottomLeftAnimation.begin = Offset(
-    //         (codeZonePrev.bottomLeft.dx / 2.3) - 40,
-    //         codeZonePrev.bottomLeft.dy / 1.9);
-    //     bottomLeftAnimation.end = Offset((codeZoneNext.bottomLeft.dx / 2.3) - 40,
-    //         codeZoneNext.bottomLeft.dy / 1.9);
-    //
-    //   });
-    //   topLeftAnimation.evaluate(controller);
-    // });
 
     return Scaffold(
       body: Stack(
         children: [
           MobileScanner(
               controller: controllerCam,
-              // MobileScannerController(
-              //   facing: CameraFacing.back,
-              //   torchEnabled: false,
-              // ),
+
               onDetect: (barcode, args) {
                 ref.read(contentProvider.notifier).state = barcode.url!.url!;
 
                 final codeZone = ref.read(codeZoneProvider.notifier);
-                print('w - ${context.size?.width} h - ${context.size?.height}');
                 codeZone.onChange(
                   topLeft: barcode.corners![0],
                   topRight: barcode.corners![1],
@@ -209,17 +163,12 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
                   bottomLeft: barcode.corners![3],
                 );
                 controller.forward();
-                // controller.reset();
-                final String? code = barcode.rawValue;
-                debugPrint('Barcode found! $code');
-                debugPrint('${barcode.corners}');
               }),
           Stack(
             children: [
               AnimatedBuilder(
                   animation: controller,
                   builder: (BuildContext context, Widget? child) {
-                    print('wig');
                     return CustomPaint(
                       child: Container(),
                       painter: OpenPainterFour(
@@ -259,8 +208,7 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
           // _showMyDialog();
           controllerCam.stop();
           controllerCam.start();
-          // controller.forward();
-        },
+          },
       ),
     );
   }
@@ -270,8 +218,6 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
       context: context,
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
-        final width = MediaQuery.of(context).size.width;
-        final height = MediaQuery.of(context).size.height;
         return AlertDialog(
           title: const Text(''),
           content: SingleChildScrollView(
@@ -304,24 +250,5 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
         );
       },
     );
-  }
-}
-
-class TargetArea extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    Path path = Path();
-    path.addPolygon([
-      Offset(0, size.height / 2),
-      Offset(size.width / 2, 0),
-      Offset(size.width, size.height / 2),
-      Offset(size.width / 2, size.height)
-    ], true);
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) {
-    return false;
   }
 }

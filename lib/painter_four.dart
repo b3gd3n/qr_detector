@@ -27,38 +27,14 @@ class OpenPainterFour extends CustomPainter {
       ..strokeJoin = StrokeJoin.round
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
-    // var paint2 = Paint()
-    // ..color = Colors.blueAccent.withOpacity(0.2)
-    //   ..blendMode = BlendMode.saturation
-    // ..style = PaintingStyle.fill;
-    // //a rectangle
-    // canvas.drawRect(offset & Size(1000, 1000), paint2);
-    print('x - ${MediaQuery.of(context).size.width / 2}, y - ${MediaQuery.of(context).size.height / 2}');
-    final width = MediaQuery.of(context).size.width;
-    final height = MediaQuery.of(context).size.height;
+
     canvas.drawPath(
         Path()
           ..addPolygon([
-            (offset1 == Offset(0, 0))
-                ? Offset(width/4,
-                    height/4.5)
-                : offset1,
-            // Offset(100, 100),
-            (offset2 == Offset(0, 0))
-                ? Offset(width/1.3,
-                height/4.5)
-                : offset2,
-            // Offset(200, 100),
-            (offset3 == Offset(0, 0))
-                ? Offset(width/1.3,
-                height/2)
-                : offset3,
-            // Offset(200, 200),
-            (offset4 == Offset(0, 0))
-                ? Offset(width/4,
-                height/2)
-                : offset4,
-            // Offset(100, 200),
+            offset1,
+            offset2,
+            offset3,
+            offset4,
           ], true),
         paint1);
   }
