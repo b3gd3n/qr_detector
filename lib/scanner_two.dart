@@ -96,9 +96,11 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
 
   @override
   Widget build(BuildContext context) {
+    
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     setState(() {
+      
       topLeftAnimation = Tween<Offset>(
           begin: Offset(width / 8, height / 8),
           end: Offset(width / 8, height / 8));
@@ -123,7 +125,6 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
               controller.stop();
               // Navigator.of(context).push(_createRoute());
               _launchURL();
-
             }
           },
         );
@@ -131,7 +132,9 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
       }
     });
 
+
     final CodeZone codeZone = ref.watch(codeZoneProvider);
+
     setState(() {
       topLeftAnimation.end =
           Offset((codeZone.topLeft.dx / 2.3) - 40, codeZone.topLeft.dy / 2);
@@ -144,6 +147,7 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
 
       bottomLeftAnimation.end = Offset(
           (codeZone.bottomLeft.dx / 2.3) - 40, codeZone.bottomLeft.dy / 1.9);
+
     });
 
     return Scaffold(
@@ -151,11 +155,11 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
         children: [
           MobileScanner(
               controller: controllerCam,
-
               onDetect: (barcode, args) {
                 ref.read(contentProvider.notifier).state = barcode.url!.url!;
 
                 final codeZone = ref.read(codeZoneProvider.notifier);
+
                 codeZone.onChange(
                   topLeft: barcode.corners![0],
                   topRight: barcode.corners![1],
@@ -169,6 +173,7 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
               AnimatedBuilder(
                   animation: controller,
                   builder: (BuildContext context, Widget? child) {
+
                     return CustomPaint(
                       child: Container(),
                       painter: OpenPainterFour(
