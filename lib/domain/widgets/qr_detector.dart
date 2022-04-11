@@ -1,5 +1,5 @@
 import 'package:barcode_detector/code_zone_entity.dart';
-import 'package:barcode_detector/painter_four.dart';
+import 'package:barcode_detector/domain/painters/path_painter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,8 +7,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'code_zone_notifier.dart';
-import 'content_page.dart';
+import '../../code_zone_notifier.dart';
+import '../../content_page.dart';
 
 final codeZoneProvider =
     StateNotifierProvider<CodeZoneNotifier, CodeZone>((ref) {
@@ -19,14 +19,17 @@ final contentProvider = StateProvider<String>((ref) {
   return '';
 });
 
-class ScannerTwo extends ConsumerStatefulWidget {
-  const ScannerTwo({Key? key}) : super(key: key);
+class QrDetector extends ConsumerStatefulWidget {
+  Color? areaColor;
+  Color? triggeredColor;
+  Curve? triggeredCurve;
+  QrDetector({Key? key, this.areaColor, this.triggeredColor, this.triggeredCurve}) : super(key: key);
 
   @override
   _ScannerTwoState createState() => _ScannerTwoState();
 }
 
-class _ScannerTwoState extends ConsumerState<ScannerTwo>
+class _ScannerTwoState extends ConsumerState<QrDetector>
     with SingleTickerProviderStateMixin {
   late AnimationController controller;
   late Tween<Offset> topLeftAnimation;
@@ -42,7 +45,7 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
   @override
   void initState() {
     super.initState();
-    areaColor = Colors.blueAccent;
+    areaColor = widget.areaColor ?? Colors.blueAccent;
     content = '';
     counter = 0;
     controllerCam = MobileScannerController();
@@ -63,7 +66,7 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
         end: const Offset(414 / 4, 736 / 2));
     curvedAnimation = CurvedAnimation(
       parent: controller,
-      curve: Curves.easeOut,
+      curve: widget.triggeredCurve ?? Curves.bounceOut,
     );
     controller.stop();
   }
@@ -114,7 +117,7 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
     });
     controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        areaColor = Colors.greenAccent;
+        areaColor = widget.triggeredColor ?? Colors.greenAccent;
         Future.delayed(
           const Duration(seconds: 1),
           () {
@@ -171,14 +174,14 @@ class _ScannerTwoState extends ConsumerState<ScannerTwo>
                   builder: (BuildContext context, Widget? child) {
                     return CustomPaint(
                       child: Container(),
-                      painter: OpenPainterFour(
+                      painter: PathPainter(
                         context: context,
                         areaColor: areaColor,
                         offset: const Offset(0.0, 0.0),
-                        offset1: topLeftAnimation.evaluate(controller),
-                        offset2: topRightAnimation.evaluate(controller),
-                        offset3: bottomRightAnimation.evaluate(controller),
-                        offset4: bottomLeftAnimation.evaluate(controller),
+                        offset1: topLeftAnimation.evaluate(curvedAnimation),
+                        offset2: topRightAnimation.evaluate(curvedAnimation),
+                        offset3: bottomRightAnimation.evaluate(curvedAnimation),
+                        offset4: bottomLeftAnimation.evaluate(curvedAnimation),
                       ),
                     );
                   }),

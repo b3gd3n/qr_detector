@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class OpenPainterFour extends CustomPainter {
+class PathPainter extends CustomPainter {
   final BuildContext context;
   final Color areaColor;
   final Offset offset;
@@ -9,7 +9,7 @@ class OpenPainterFour extends CustomPainter {
   final Offset offset3;
   final Offset offset4;
 
-  OpenPainterFour({
+  PathPainter({
     required this.context,
     required this.areaColor,
     required this.offset,
