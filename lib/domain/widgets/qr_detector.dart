@@ -1,7 +1,11 @@
 import 'package:barcode_detector/code_zone_entity.dart';
 import 'package:barcode_detector/domain/painters/path_painter.dart';
+import 'package:barcode_detector/domain/widgets/color_palette.dart';
+import 'package:barcode_detector/domain/world_to_screen_coords.dart';
+import 'package:barcode_detector/global_providers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:riverpod/riverpod.dart';
@@ -23,7 +27,17 @@ class QrDetector extends ConsumerStatefulWidget {
   Color? areaColor;
   Color? triggeredColor;
   Curve? triggeredCurve;
-  QrDetector({Key? key, this.areaColor, this.triggeredColor, this.triggeredCurve}) : super(key: key);
+  final double height;
+  final double width;
+
+  QrDetector({
+    Key? key,
+    this.areaColor,
+    this.triggeredColor,
+    this.triggeredCurve,
+    required this.height,
+    required this.width,
+  }) : super(key: key);
 
   @override
   _ScannerTwoState createState() => _ScannerTwoState();
@@ -45,51 +59,50 @@ class _ScannerTwoState extends ConsumerState<QrDetector>
   @override
   void initState() {
     super.initState();
-    areaColor = widget.areaColor ?? Colors.blueAccent;
+
     content = '';
     counter = 0;
     controllerCam = MobileScannerController();
     controllerCam.facing = CameraFacing.back;
     controller =
         AnimationController(duration: const Duration(seconds: 1), vsync: this);
-    topLeftAnimation = Tween<Offset>(
-        begin: const Offset(414 / 4, 736 / 4.5),
-        end: const Offset(414 / 4, 736 / 4.5));
-    topRightAnimation = Tween<Offset>(
-        begin: const Offset(414 / 1.3, 736 / 4.5),
-        end: const Offset(414 / 1.3, 736 / 4.5));
-    bottomRightAnimation = Tween<Offset>(
-        begin: const Offset(414 / 1.3, 736 / 2),
-        end: const Offset(414 / 1.3, 736 / 2));
-    bottomLeftAnimation = Tween<Offset>(
-        begin: const Offset(414 / 4, 736 / 2),
-        end: const Offset(414 / 4, 736 / 2));
+    _setDefaultArea();
+
     curvedAnimation = CurvedAnimation(
       parent: controller,
       curve: widget.triggeredCurve ?? Curves.bounceOut,
     );
     controller.stop();
+
+    controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        areaColor = widget.triggeredColor ?? Colors.greenAccent;
+        Future.delayed(
+          const Duration(seconds: 1),
+          () {
+            _launchURL();
+            controller.reset();
+            _setDefaultArea();
+          },
+        );
+      }
+    });
   }
 
-  Route _createRoute() {
-    content = ref.watch(contentProvider.state).state;
-    return PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) =>
-          Content(url: content),
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = Offset(0.0, 1.0);
-        const end = Offset.zero;
-        const curve = Curves.bounceInOut;
-
-        var tween =
-            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-
-        return SlideTransition(
-          position: animation.drive(tween),
-          child: child,
-        );
-      },
-    );
+  void _setDefaultArea() {
+    areaColor = widget.areaColor ?? Colors.blueAccent;
+    topLeftAnimation = Tween<Offset>(
+        begin: Offset(widget.width / 8, widget.height / 8),
+        end: Offset(widget.width / 8, widget.height / 8));
+    topRightAnimation = Tween<Offset>(
+        begin: Offset(widget.width / 1.15, widget.height / 8),
+        end: Offset(widget.width / 1.15, widget.height / 8));
+    bottomRightAnimation = Tween<Offset>(
+        begin: Offset(widget.width / 1.15, widget.height / 1.15),
+        end: Offset(widget.width / 1.15, widget.height / 1.15));
+    bottomLeftAnimation = Tween<Offset>(
+        begin: Offset(widget.width / 8, widget.height / 1.15),
+        end: Offset(widget.width / 8, widget.height / 1.15));
   }
 
   void _launchURL() async {
@@ -97,67 +110,37 @@ class _ScannerTwoState extends ConsumerState<QrDetector>
     if (!await launch(content)) throw 'Could not launch $content';
   }
 
-  @override
-  Widget build(BuildContext context) {
-    double height = MediaQuery.of(context).size.height;
-    double width = MediaQuery.of(context).size.width;
-    setState(() {
-      topLeftAnimation = Tween<Offset>(
-          begin: Offset(width / 8, height / 8),
-          end: Offset(width / 8, height / 8));
-      topRightAnimation = Tween<Offset>(
-          begin: Offset(width / 1.15, height / 8),
-          end: Offset(width / 1.15, height / 8));
-      bottomRightAnimation = Tween<Offset>(
-          begin: Offset(width / 1.15, height / 1.15),
-          end: Offset(width / 1.15, height / 1.15));
-      bottomLeftAnimation = Tween<Offset>(
-          begin: Offset(width / 8, height / 1.15),
-          end: Offset(width / 8, height / 1.15));
-    });
-    controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        areaColor = widget.triggeredColor ?? Colors.greenAccent;
-        Future.delayed(
-          const Duration(seconds: 1),
-          () {
-            if (counter == 0) {
-              counter++;
-              controller.stop();
-              // Navigator.of(context).push(_createRoute());
-              _launchURL();
-
-            }
-          },
-        );
-
-      }
-    });
-
+  void _getActualCords() {
     final CodeZone codeZone = ref.watch(codeZoneProvider);
     setState(() {
-      topLeftAnimation.end =
-          Offset((codeZone.topLeft.dx / 2.3) - 40, codeZone.topLeft.dy / 2);
+      final List<Offset> areaCorners = worldToScreenCoords(
+        corners: [
+          Offset(codeZone.topLeft.dx, codeZone.topLeft.dy),
+          Offset(codeZone.topRight.dx, codeZone.topRight.dy),
+          Offset(codeZone.bottomRight.dx, codeZone.bottomRight.dy),
+          Offset(codeZone.bottomLeft.dx, codeZone.bottomLeft.dy),
+        ],
+      );
+      topLeftAnimation.end = areaCorners[0];
 
-      topRightAnimation.end =
-          Offset((codeZone.topRight.dx / 2.1) - 40, codeZone.topRight.dy / 2);
+      topRightAnimation.end = areaCorners[1];
 
-      bottomRightAnimation.end = Offset(
-          (codeZone.bottomRight.dx / 2.1) - 40, codeZone.bottomRight.dy / 1.9);
+      bottomRightAnimation.end = areaCorners[2];
 
-      bottomLeftAnimation.end = Offset(
-          (codeZone.bottomLeft.dx / 2.3) - 40, codeZone.bottomLeft.dy / 1.9);
+      bottomLeftAnimation.end = areaCorners[3];
     });
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
           MobileScanner(
               controller: controllerCam,
-
               onDetect: (barcode, args) {
                 ref.read(contentProvider.notifier).state = barcode.url!.url!;
-
+                _getActualCords();
                 final codeZone = ref.read(codeZoneProvider.notifier);
                 codeZone.onChange(
                   topLeft: barcode.corners![0],
@@ -203,55 +186,16 @@ class _ScannerTwoState extends ConsumerState<QrDetector>
                 ),
               ),
             ),
-          )
+          ),
+          // ColorPalette()
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // _showMyDialog();
           controllerCam.stop();
           controllerCam.start();
-          },
+        },
       ),
-    );
-  }
-
-  Future<void> _showMyDialog(String data) async {
-    return showCupertinoDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text(''),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text('$data'),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Reset'),
-              onPressed: () {
-                // topLeftAnimation.end = Offset(width/4,
-                //     height/4.5);
-                // topRightAnimation.end =  Offset(width/1.3,
-                //     height/4.5);
-                // bottomLeftAnimation.end = Offset(width/4,
-                //     height/2);
-                // bottomRightAnimation.end = Offset(width/1.3,
-                //     height/2);
-                controller.reset();
-                // controller.forward();
-                controllerCam.stop();
-                controllerCam.start();
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 }
