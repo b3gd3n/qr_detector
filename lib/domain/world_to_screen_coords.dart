@@ -1,3 +1,8 @@
+// The helper WorldToScreenCoordinates method
+// gets an array of world coordinate offsets
+// divides the world coordinates by the projection factor
+// returns an array of offsets of the transformed coordinates
+
 import 'dart:ui';
 
 const double leftProjectionCoefficient = 2.3;

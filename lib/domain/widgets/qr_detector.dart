@@ -1,24 +1,20 @@
 import 'package:barcode_detector/code_zone_entity.dart';
 import 'package:barcode_detector/domain/painters/path_painter.dart';
-import 'package:barcode_detector/domain/widgets/color_palette.dart';
 import 'package:barcode_detector/domain/world_to_screen_coords.dart';
-import 'package:barcode_detector/global_providers.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:riverpod/riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../code_zone_notifier.dart';
-import '../../content_page.dart';
 
+// Provider tracking the CodeZone state
 final codeZoneProvider =
     StateNotifierProvider<CodeZoneNotifier, CodeZone>((ref) {
   return CodeZoneNotifier();
 });
 
+// Provider tracking the state of the read content
 final contentProvider = StateProvider<String>((ref) {
   return '';
 });
@@ -40,10 +36,10 @@ class QrDetector extends ConsumerStatefulWidget {
   }) : super(key: key);
 
   @override
-  _ScannerTwoState createState() => _ScannerTwoState();
+  _QrDetectorState createState() => _QrDetectorState();
 }
 
-class _ScannerTwoState extends ConsumerState<QrDetector>
+class _QrDetectorState extends ConsumerState<QrDetector>
     with SingleTickerProviderStateMixin {
   late AnimationController controller;
   late Tween<Offset> topLeftAnimation;
@@ -52,18 +48,18 @@ class _ScannerTwoState extends ConsumerState<QrDetector>
   late Tween<Offset> bottomLeftAnimation;
   late MobileScannerController controllerCam;
   late CurvedAnimation curvedAnimation;
-  late int counter;
   late String content;
   late Color areaColor;
 
   @override
   void initState() {
     super.initState();
-
+    // Content initialization
     content = '';
-    counter = 0;
+    // Camera controller initialization
     controllerCam = MobileScannerController();
     controllerCam.facing = CameraFacing.back;
+
     controller =
         AnimationController(duration: const Duration(seconds: 1), vsync: this);
     _setDefaultArea();
@@ -74,6 +70,11 @@ class _ScannerTwoState extends ConsumerState<QrDetector>
     );
     controller.stop();
 
+    // Controller listener,
+    // at the end of the animation
+    // calls the open link method
+    // reset controller
+    // sets the default scan zone
     controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         areaColor = widget.triggeredColor ?? Colors.greenAccent;
@@ -89,6 +90,7 @@ class _ScannerTwoState extends ConsumerState<QrDetector>
     });
   }
 
+  // Setting the color and coordinates of the default zone
   void _setDefaultArea() {
     areaColor = widget.areaColor ?? Colors.blueAccent;
     topLeftAnimation = Tween<Offset>(
@@ -105,14 +107,17 @@ class _ScannerTwoState extends ConsumerState<QrDetector>
         end: Offset(widget.width / 8, widget.height / 1.15));
   }
 
+  // The method opens a link obtained from the content
   void _launchURL() async {
     content = ref.watch(contentProvider.state).state;
     if (!await launch(content)) throw 'Could not launch $content';
   }
 
+  // The method updates the actual coordinates of the scan area
   void _getActualCords() {
     final CodeZone codeZone = ref.watch(codeZoneProvider);
     setState(() {
+      // Transferring the result of the coordinate transformation method to an array
       final List<Offset> areaCorners = worldToScreenCoords(
         corners: [
           Offset(codeZone.topLeft.dx, codeZone.topLeft.dy),
@@ -139,8 +144,10 @@ class _ScannerTwoState extends ConsumerState<QrDetector>
           MobileScanner(
               controller: controllerCam,
               onDetect: (barcode, args) {
+                // Reading a link on detection
                 ref.read(contentProvider.notifier).state = barcode.url!.url!;
                 _getActualCords();
+                // Reading corner coordinates during detection
                 final codeZone = ref.read(codeZoneProvider.notifier);
                 codeZone.onChange(
                   topLeft: barcode.corners![0],
@@ -170,6 +177,7 @@ class _ScannerTwoState extends ConsumerState<QrDetector>
                   }),
             ],
           ),
+          //  Just label
           Align(
             alignment: Alignment.topCenter,
             child: Container(
