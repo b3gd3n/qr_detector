@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'code_zone_entity.dart';
+import '../entity/code_zone_entity.dart';
 
 class CodeZoneNotifier extends StateNotifier<CodeZone> {
   CodeZoneNotifier()

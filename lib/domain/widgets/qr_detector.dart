@@ -1,4 +1,4 @@
-import 'package:barcode_detector/code_zone_entity.dart';
+import 'package:barcode_detector/entity/code_zone_entity.dart';
 import 'package:barcode_detector/domain/painters/path_painter.dart';
 import 'package:barcode_detector/domain/world_to_screen_coords.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../code_zone_notifier.dart';
+import '../../notifiers/code_zone_notifier.dart';
 
 // Provider tracking the CodeZone state
 final codeZoneProvider =
