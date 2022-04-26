@@ -1,5 +1,3 @@
-import 'package:barcode_detector/domain/widgets/qr_detector.dart';
-import 'package:barcode_detector/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,7 +6,7 @@ import 'domain/widgets/home_page.dart';
 void main() {
   runApp(const ProviderScope(
       child: MediaQuery(
-        data: MediaQueryData(),
+    data: MediaQueryData(),
     child: MyApp(),
   )));
 }
@@ -34,8 +32,6 @@ class MyApp extends StatelessWidget {
           // is not restarted.
           primarySwatch: Colors.blue,
         ),
-        home: const Scaffold(
-          body: Home()
-        ));
+        home: const Scaffold(body: Home()));
   }
 }
